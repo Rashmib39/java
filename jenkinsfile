@@ -1,0 +1,44 @@
+
+pipeline {
+   agent any 
+   	tools {
+		maven 'maven'
+		}
+	stages {
+		stage ('checkout') {
+		   steps {
+		      echo "checking out"
+		      git branch: 'master', url: 'https://github.com/Rashmib39/java.git'
+		      }
+		}
+		stage('build and test') {
+	           steps {
+		      echo "build and test"
+		      sh 'mvn clean package'
+		      sh 'ls -l'
+		      }
+		 }
+		 stage('build image') {
+		    steps {
+		        script {
+			  echo "build image"
+			  sh 'docker build -t  rashmi/java .'
+			  }
+		}
+                }
+		stage ('push image') {
+		    steps {
+                script {
+                    withCredentials([string(credentialsId: 'dockerhub-cred', variable: 'dockerhubpwd')]) {
+                        echo "Logging into Docker Hub"
+                        sh "docker login -u rashmib341 -p ${dockerhubpwd}"
+                        
+                        echo "Tagging and pushing Docker image"
+                        sh "docker push rashmi/java"
+                    }
+                }
+            }
+        }
+    }
+}
+	        
